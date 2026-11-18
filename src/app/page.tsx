@@ -12,7 +12,7 @@ type Proyecto = {
   nombre: string;
   cliente: string;
   ubicacion: string;
-  estado: 'En cotizaciÃ³n' | 'En ejecuciÃ³n' | 'Finalizado';
+  estado: 'En cotización' | 'En ejecución' | 'Finalizado';
   presupuesto_clp: number;
   valor_hora_hh: number;
   fecha_inicio: string;
@@ -65,7 +65,7 @@ export default function SecurControlApp() {
   // Modales y formularios
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProj, setNewProj] = useState({
-    nombre: '', cliente: '', ubicacion: '', estado: 'En ejecuciÃ³n', presupuesto_clp: 1500000, valor_hora_hh: 15000
+    nombre: '', cliente: '', ubicacion: '', estado: 'En ejecución', presupuesto_clp: 1500000, valor_hora_hh: 15000
   });
 
   const [newAct, setNewAct] = useState({ titulo: '', tecnico_asignado: '' });
@@ -108,7 +108,7 @@ export default function SecurControlApp() {
     e.preventDefault();
     setAuthError('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setAuthError('Credenciales invÃ¡lidas. Verifica correo y contraseÃ±a.');
+    if (error) setAuthError('Credenciales inválidas. Verifica correo y contraseí±a.');
   };
 
   const handleCreateProject = async (e: React.FormEvent) => {
@@ -118,7 +118,7 @@ export default function SecurControlApp() {
       setProyectos([data, ...proyectos]);
       setSelectedId(data.id);
       setShowNewProject(false);
-      setNewProj({ nombre: '', cliente: '', ubicacion: '', estado: 'En ejecuciÃ³n', presupuesto_clp: 1500000, valor_hora_hh: 15000 });
+      setNewProj({ nombre: '', cliente: '', ubicacion: '', estado: 'En ejecución', presupuesto_clp: 1500000, valor_hora_hh: 15000 });
     }
   };
 
@@ -182,7 +182,7 @@ export default function SecurControlApp() {
             <div className="p-3 bg-blue-600 rounded-xl text-white"><Camera className="w-7 h-7" /></div>
             <div>
               <h1 className="text-2xl font-bold text-white">SecurControl</h1>
-              <p className="text-xs text-slate-400">GestiÃ³n de Proyectos & Obras CCTV</p>
+              <p className="text-xs text-slate-400">Gestión de Proyectos & Obras CCTV</p>
             </div>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -195,11 +195,11 @@ export default function SecurControlApp() {
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-300 mb-1">ContraseÃ±a</label>
+              <label className="block text-sm text-slate-300 mb-1">Contraseí±a</label>
               <input
                 type="password" required value={password} onChange={e => setPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="*************"
               />
             </div>
             {authError && <p className="text-red-400 text-xs flex items-center gap-1"><AlertCircle className="w-4 h-4" />{authError}</p>}
@@ -245,7 +245,7 @@ export default function SecurControlApp() {
           <button
             onClick={() => supabase.auth.signOut()}
             className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg"
-            title="Cerrar sesiÃ³n"
+            title="Cerrar sesión"
           >
             <LogOut className="w-5 h-5" />
           </button>
@@ -288,7 +288,7 @@ export default function SecurControlApp() {
                   <p className="text-sm text-slate-400">{currentProj.cliente} â€” {currentProj.ubicacion}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Avance TÃ©cnico</span>
+                  <span className="text-xs text-slate-400 block">Avance Técnico</span>
                   <span className="text-2xl font-bold text-blue-400">{avancePct}%</span>
                 </div>
               </div>
@@ -315,7 +315,7 @@ export default function SecurControlApp() {
                 </div>
               </div>
 
-              {/* PestaÃ±as */}
+              {/* Pestaí±as */}
               <div className="flex gap-2 border-b border-slate-800 pb-2">
                 {(['actividades', 'gastos', 'tiempo'] as const).map(tab => (
                   <button
@@ -330,17 +330,17 @@ export default function SecurControlApp() {
                 ))}
               </div>
 
-              {/* Contenido PestaÃ±a: Actividades */}
+              {/* Contenido Pestaí±a: Actividades */}
               {activeTab === 'actividades' && (
                 <div className="space-y-4">
                   <form onSubmit={addActividad} className="flex flex-col sm:flex-row gap-2">
                     <input
-                      type="text" required placeholder="Nueva tarea (ej. Montaje cÃ¡maras exterior)"
+                      type="text" required placeholder="Nueva tarea (ej. Montaje cámaras exterior)"
                       value={newAct.titulo} onChange={e => setNewAct({ ...newAct, titulo: e.target.value })}
                       className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
                     />
                     <input
-                      type="text" placeholder="TÃ©cnico"
+                      type="text" placeholder="Técnico"
                       value={newAct.tecnico_asignado} onChange={e => setNewAct({ ...newAct, tecnico_asignado: e.target.value })}
                       className="sm:w-40 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
                     />
@@ -364,12 +364,12 @@ export default function SecurControlApp() {
                 </div>
               )}
 
-              {/* Contenido PestaÃ±a: Gastos */}
+              {/* Contenido Pestaí±a: Gastos */}
               {activeTab === 'gastos' && (
                 <div className="space-y-4">
                   <form onSubmit={addGasto} className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <input
-                      type="text" required placeholder="DescripciÃ³n (ej. 4 CÃ¡maras Domo)"
+                      type="text" required placeholder="Descripción (ej. 4 Cámaras Domo)"
                       value={newGasto.descripcion} onChange={e => setNewGasto({ ...newGasto, descripcion: e.target.value })}
                       className="sm:col-span-2 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
                     />
@@ -394,12 +394,12 @@ export default function SecurControlApp() {
                 </div>
               )}
 
-              {/* Contenido PestaÃ±a: Tiempo */}
+              {/* Contenido Pestaí±a: Tiempo */}
               {activeTab === 'tiempo' && (
                 <div className="space-y-4">
                   <form onSubmit={addTiempo} className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <input
-                      type="text" required placeholder="Nombre TÃ©cnico"
+                      type="text" required placeholder="Nombre Técnico"
                       value={newTiempo.tecnico} onChange={e => setNewTiempo({ ...newTiempo, tecnico: e.target.value })}
                       className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
                     />
@@ -444,7 +444,7 @@ export default function SecurControlApp() {
             <h3 className="text-lg font-bold text-white">Crear Nuevo Proyecto CCTV</h3>
             <form onSubmit={handleCreateProject} className="space-y-3">
               <input
-                type="text" required placeholder="Nombre de la obra (ej. 8 CÃ¡maras IP Local Comercial)"
+                type="text" required placeholder="Nombre de la obra (ej. 8 Cámaras IP Local Comercial)"
                 value={newProj.nombre} onChange={e => setNewProj({ ...newProj, nombre: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
               />
@@ -454,7 +454,7 @@ export default function SecurControlApp() {
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
               />
               <input
-                type="text" placeholder="UbicaciÃ³n / Comuna"
+                type="text" placeholder="Ubicación / Comuna"
                 value={newProj.ubicacion} onChange={e => setNewProj({ ...newProj, ubicacion: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
               />
