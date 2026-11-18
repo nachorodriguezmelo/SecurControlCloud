@@ -75,6 +75,14 @@ export default function SecurControlApp() {
   const [newGasto, setNewGasto] = useState({ descripcion: '', categoria: 'Materiales/Equipos', monto_clp: 0 });
   const [newTiempo, setNewTiempo] = useState({ tecnico: '', horas: 4, tarea: '' });
 
+
+  const [busqueda, setBusqueda] = useState('');
+
+const proyectosFiltrados = proyectos.filter(p => 
+  p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+  p.cliente.toLowerCase().includes(busqueda.toLowerCase())
+);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -207,6 +215,8 @@ const addActividad = async (e: React.FormEvent) => {
     }
   };
 
+const selectedProyecto = proyectos.find(p => p.id === selectedId)
+
   const eliminarGasto = async (id: string) => {
     const { error } = await supabase.from('gastos').delete().eq('id', id);
     if (!error) {
@@ -225,6 +235,38 @@ const eliminarTiempo = async (id: string) => {
     }
   };
 
+// Cambiar el estado del proyecto a "Finalizado" (o "En ejecución")
+  const cambiarEstadoProyecto = async (nuevoEstado: 'En ejecución' | 'Finalizado') => {
+    if (!selectedId) return;
+
+    const { error } = await supabase
+      .from('proyectos')
+      .update({ estado: nuevoEstado })
+      .eq('id', selectedId);
+
+    if (!error) {
+      // Actualizamos el estado localmente para que se refleje de inmediato
+      setProyectos(proyectos.map(p => p.id === selectedId ? { ...p, estado: nuevoEstado } : p));
+    } else {
+      alert("Error al actualizar el estado: " + error.message);
+    }
+  };
+
+  // Función opcional para eliminar un proyecto completo si fuera necesario
+  const eliminarProyecto = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este proyecto y todos sus registros asociados?")) return;
+
+    const { error } = await supabase.from('proyectos').delete().eq('id', id);
+    if (!error) {
+      setProyectos(proyectos.filter(p => p.id !== id));
+      setSelectedId(null);
+    } else {
+      alert("Error al eliminar el proyecto: " + error.message);
+    }
+  };
+
+
+
   if (loadingAuth) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Cargando sistema...</div>;
 
   // Pantalla de Login
@@ -232,6 +274,13 @@ const eliminarTiempo = async (id: string) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+          
+          
+        
+          
+          
+          
+          
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-blue-600 rounded-xl text-white"><Camera className="w-7 h-7" /></div>
             <div>
@@ -309,9 +358,16 @@ const eliminarTiempo = async (id: string) => {
       <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Lista de Proyectos */}
         <aside className="lg:col-span-4 space-y-3">
+          
+
+
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
             <FolderKanban className="w-4 h-4" /> Proyectos Activos ({proyectos.length})
           </h2>
+
+
+
+          
           {proyectos.map(p => (
             <div
               key={p.id}
@@ -330,6 +386,37 @@ const eliminarTiempo = async (id: string) => {
               <p className="text-sm font-semibold text-emerald-400 mt-2">{formatCLP(p.presupuesto_clp)}</p>
             </div>
           ))}
+
+
+  {/* Botones de control de estado del proyecto actual */}
+{selectedProyecto && (
+  <div className="flex items-center gap-2 mb-4">
+    {selectedProyecto.estado !== 'Finalizado' ? (
+      <button
+        onClick={() => cambiarEstadoProyecto('Finalizado')}
+        className="px-3 py-1.5 bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-emerald-400 rounded-lg text-xs font-medium transition flex items-center gap-1.5"
+      >
+        <CheckCircle2 className="w-3.5 h-3.5" /> Marcar como Finalizado
+      </button>
+    ) : (
+      <button
+        onClick={() => cambiarEstadoProyecto('En ejecución')}
+        className="px-3 py-1.5 bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/30 text-blue-400 rounded-lg text-xs font-medium transition flex items-center gap-1.5"
+      >
+        <FolderKanban className="w-3.5 h-3.5" /> Reabrir Proyecto
+      </button>
+    )}
+
+    <button
+      onClick={() => eliminarProyecto(selectedProyecto.id)}
+      className="px-3 py-1.5 bg-red-600/20 border border-red-500/40 hover:bg-red-600/30 text-red-400 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ml-auto"
+    >
+      <Trash2 className="w-3.5 h-3.5" /> Eliminar Proyecto
+    </button>
+  </div>
+)}
+
+
         </aside>
 
         {/* Detalle del Proyecto Seleccionado */}
@@ -369,7 +456,7 @@ const eliminarTiempo = async (id: string) => {
                 </div>
               </div>
 
-              
+
 {/* Tarjetas de Resumen (Presupuesto, Gastos, etc.) */}
 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
   {/* ... tus tarjetas de resumen actuales ... */}
