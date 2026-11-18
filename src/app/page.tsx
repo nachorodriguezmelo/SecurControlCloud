@@ -78,10 +78,19 @@ export default function SecurControlApp() {
 
   const [busqueda, setBusqueda] = useState('');
 
+
+
+
 const proyectosFiltrados = proyectos.filter(p => 
   p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
   p.cliente.toLowerCase().includes(busqueda.toLowerCase())
 );
+
+
+const [editando, setEditando] = useState(false);
+const [editNombre, setEditNombre] = useState('');
+const [editCliente, setEditCliente] = useState('');
+const [editPresupuesto, setEditPresupuesto] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -265,6 +274,42 @@ const eliminarTiempo = async (id: string) => {
     }
   };
 
+  // Activar el modo edición y cargar los datos actuales en los inputs
+  const abrirEdicion = () => {
+    if (!selectedProyecto) return;
+    setEditNombre(selectedProyecto.nombre);
+    setEditCliente(selectedProyecto.cliente);
+    setEditPresupuesto(selectedProyecto.presupuesto_clp.toString());
+    setEditando(true);
+  };
+
+  // Guardar los cambios en Supabase
+  const guardarEdicionProyecto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedId) return;
+
+    const { error } = await supabase
+      .from('proyectos')
+      .update({
+        nombre: editNombre,
+        cliente: editCliente,
+        presupuesto_clp: parseFloat(editPresupuesto) || 0
+      })
+      .eq('id', selectedId);
+
+    if (!error) {
+      // Actualizamos localmente
+      setProyectos(proyectos.map(p => p.id === selectedId ? {
+        ...p,
+        nombre: editNombre,
+        cliente: editCliente,
+        presupuesto_clp: parseFloat(editPresupuesto) || 0
+      } : p));
+      setEditando(false);
+    } else {
+      alert("Error al actualizar el proyecto: " + error.message);
+    }
+  };
 
 
   if (loadingAuth) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Cargando sistema...</div>;
@@ -398,6 +443,7 @@ const eliminarTiempo = async (id: string) => {
       >
         <CheckCircle2 className="w-3.5 h-3.5" /> Marcar como Finalizado
       </button>
+      
     ) : (
       <button
         onClick={() => cambiarEstadoProyecto('En ejecución')}
@@ -407,6 +453,12 @@ const eliminarTiempo = async (id: string) => {
       </button>
     )}
 
+<button
+  onClick={abrirEdicion}
+  className="px-3 py-1.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5"
+>
+  Editar Proyecto
+</button>
     <button
       onClick={() => eliminarProyecto(selectedProyecto.id)}
       className="px-3 py-1.5 bg-red-600/20 border border-red-500/40 hover:bg-red-600/30 text-red-400 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ml-auto"
@@ -691,6 +743,67 @@ const eliminarTiempo = async (id: string) => {
           )}
         </section>
       </main>
+
+   {/* Modal Edición Proyecto */}
+{editando && (
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <h3 className="text-lg font-bold text-slate-100 mb-4">Editar Proyecto</h3>
+      
+      <form onSubmit={guardarEdicionProyecto} className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Nombre de la Obra</label>
+          <input
+            type="text"
+            value={editNombre}
+            onChange={(e) => setEditNombre(e.target.value)}
+            required
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Cliente / Constructora</label>
+          <input
+            type="text"
+            value={editCliente}
+            onChange={(e) => setEditCliente(e.target.value)}
+            required
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Presupuesto (CLP)</label>
+          <input
+            type="number"
+            value={editPresupuesto}
+            onChange={(e) => setEditPresupuesto(e.target.value)}
+            required
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => setEditando(false)}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition"
+          >
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
       {/* Modal Nuevo Proyecto */}
       {showNewProject && (
