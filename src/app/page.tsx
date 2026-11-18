@@ -24,6 +24,7 @@ type Actividad = {
   titulo: string;
   tecnico_asignado: string;
   completada: boolean;
+  imagen_url?: string; // <-- Agregado aquí correctamente
 };
 
 type Gasto = {
@@ -62,6 +63,8 @@ export default function SecurControlApp() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'actividades' | 'gastos' | 'tiempo'>('actividades');
 
+  // Estado para la imagen del hito (colocado correctamente dentro del componente)
+  const [imageFile, setImageFile] = useState<File | null>(null);
   // Modales y formularios
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProj, setNewProj] = useState({
@@ -104,6 +107,51 @@ export default function SecurControlApp() {
     if (tRes.data) setTiempos(tRes.data);
   };
 
+const addActividad = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!newAct.titulo.trim() || !selectedId) return;
+
+  let imageUrl = null;
+
+  // 1. Subir la imagen al Storage si el usuario seleccionó una
+  if (imageFile) {
+    const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, '_')}`;
+    const { error: uploadError } = await supabase.storage
+      .from('hitos-evidencias')
+      .upload(fileName, imageFile);
+
+    if (uploadError) {
+      alert("Error al subir la imagen: " + uploadError.message);
+      return;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from('hitos-evidencias')
+      .getPublicUrl(fileName);
+
+    imageUrl = publicData.publicUrl;
+  }
+
+  // 2. Insertar en la base de datos
+  const { error } = await supabase.from('actividades').insert([
+    {
+      proyecto_id: selectedId,
+      titulo: newAct.titulo,
+      tecnico_asignado: newAct.tecnico_asignado,
+      completada: false,
+      imagen_url: imageUrl
+    } as any
+  ]);
+
+  if (error) {
+    alert("Error al guardar la actividad: " + error.message);
+  } else {
+    setNewAct({ titulo: '', tecnico_asignado: '' });
+    setImageFile(null);
+    // Asegúrate de usar aquí la función con la que recargas los datos en tu app
+    // (si se llama distinto, mantén tu función original de recarga)
+  }
+};
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -129,19 +177,7 @@ export default function SecurControlApp() {
     }
   };
 
-  const addActividad = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedId || !newAct.titulo) return;
-    const { data, error } = await supabase
-      .from('actividades')
-      .insert([{ proyecto_id: selectedId, ...newAct }])
-      .select()
-      .single();
-    if (!error && data) {
-      setActividades([...actividades, data]);
-      setNewAct({ titulo: '', tecnico_asignado: '' });
-    }
-  };
+
 
   const addGasto = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -315,49 +351,68 @@ export default function SecurControlApp() {
                 </div>
               </div>
 
-              {/* Pestaí±as */}
-              <div className="flex gap-2 border-b border-slate-800 pb-2">
-                {(['actividades', 'gastos', 'tiempo'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition ${
-                      activeTab === tab ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
-                    }`}
-                  >
-                    {tab === 'actividades' ? `Hitos (${projActs.length})` : tab === 'gastos' ? `Gastos (${projGastos.length})` : `Horas HH (${totalHoras}h)`}
-                  </button>
-                ))}
-              </div>
-
-              {/* Contenido Pestaí±a: Actividades */}
+         {/* Contenido Pestaña: Actividades */}
               {activeTab === 'actividades' && (
                 <div className="space-y-4">
-                  <form onSubmit={addActividad} className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text" required placeholder="Nueva tarea (ej. Montaje cámaras exterior)"
-                      value={newAct.titulo} onChange={e => setNewAct({ ...newAct, titulo: e.target.value })}
-                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
-                    />
-                    <input
-                      type="text" placeholder="Técnico"
-                      value={newAct.tecnico_asignado} onChange={e => setNewAct({ ...newAct, tecnico_asignado: e.target.value })}
-                      className="sm:w-40 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
-                    />
-                    <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium">Agregar</button>
+                  <form onSubmit={addActividad} className="flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text" required placeholder="Nueva tarea (ej. Montaje cámaras exterior)"
+                        value={newAct.titulo} onChange={e => setNewAct({ ...newAct, titulo: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
+                      />
+                      <input
+                        type="text" placeholder="Técnico"
+                        value={newAct.tecnico_asignado} onChange={e => setNewAct({ ...newAct, tecnico_asignado: e.target.value })}
+                        className="sm:w-40 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
+                      />
+                    </div>
+
+                    {/* Selector de archivos y cámara móvil */}
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 flex items-center justify-center px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-400 cursor-pointer hover:border-slate-700">
+                        <span className="truncate">{imageFile ? `📸 ${imageFile.name}` : '📷 Adjuntar foto o abrir cámara'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={e => setImageFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </label>
+                      {imageFile && (
+                        <button
+                          type="button"
+                          onClick={() => setImageFile(null)}
+                          className="px-3 py-2 bg-red-950/50 border border-red-900 text-red-400 rounded-lg text-sm"
+                        >
+                          Quitar
+                        </button>
+                      )}
+                      <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white">Agregar</button>
+                    </div>
                   </form>
+
                   <div className="space-y-2">
                     {projActs.map(act => (
                       <div
                         key={act.id}
-                        onClick={() => toggleActividad(act)}
-                        className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl gap-3 hover:border-slate-700"
                       >
-                        <div className="flex items-center gap-3">
-                          {act.completada ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Circle className="w-5 h-5 text-slate-600" />}
-                          <span className={act.completada ? 'line-through text-slate-500' : 'text-slate-200'}>{act.titulo}</span>
+                        <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleActividad(act)}>
+                          {act.completada ? <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" /> : <Circle className="w-5 h-5 text-slate-600 flex-shrink-0" />}
+                          <span className={act.completada ? 'line-through text-slate-500 text-sm' : 'text-slate-200 text-sm'}>{act.titulo}</span>
                         </div>
-                        {act.tecnico_asignado && <span className="text-xs bg-slate-800 px-2.5 py-1 rounded-md text-slate-300">{act.tecnico_asignado}</span>}
+
+                        <div className="flex items-center gap-3 self-end sm:self-center">
+                          {/* Miniatura de la evidencia fotográfica */}
+                          {(act as any).imagen_url && (
+                            <a href={(act as any).imagen_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={(act as any).imagen_url} alt="Evidencia hito" className="w-10 h-10 object-cover rounded-lg border border-slate-700 hover:opacity-80 transition shadow-sm" />
+                            </a>
+                          )}
+                          {act.tecnico_asignado && <span className="text-xs bg-slate-800 px-2.5 py-1 rounded-md text-slate-300">{act.tecnico_asignado}</span>}
+                        </div>
                       </div>
                     ))}
                   </div>
