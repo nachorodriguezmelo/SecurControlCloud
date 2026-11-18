@@ -207,6 +207,24 @@ const addActividad = async (e: React.FormEvent) => {
     }
   };
 
+  const eliminarGasto = async (id: string) => {
+    const { error } = await supabase.from('gastos').delete().eq('id', id);
+    if (!error) {
+      setGastos(gastos.filter(g => g.id !== id));
+    } else {
+      alert("Error al eliminar el gasto: " + error.message);
+    }
+  };
+
+const eliminarTiempo = async (id: string) => {
+    const { error } = await supabase.from('registros_tiempo').delete().eq('id', id);
+    if (!error) {
+      setTiempos(tiempos.filter(t => t.id !== id));
+    } else {
+      alert("Error al eliminar el registro: " + error.message);
+    }
+  };
+
   if (loadingAuth) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Cargando sistema...</div>;
 
   // Pantalla de Login
@@ -308,7 +326,7 @@ const addActividad = async (e: React.FormEvent) => {
                   {p.estado}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">{p.cliente} â€¢ {p.ubicacion}</p>
+              <p className="text-xs text-slate-400">{p.cliente} & {p.ubicacion}</p>
               <p className="text-sm font-semibold text-emerald-400 mt-2">{formatCLP(p.presupuesto_clp)}</p>
             </div>
           ))}
@@ -321,7 +339,7 @@ const addActividad = async (e: React.FormEvent) => {
               <div className="flex flex-wrap justify-between items-start gap-4 border-b border-slate-800 pb-4">
                 <div>
                   <h2 className="text-2xl font-bold text-white">{currentProj.nombre}</h2>
-                  <p className="text-sm text-slate-400">{currentProj.cliente} â€” {currentProj.ubicacion}</p>
+                  <p className="text-sm text-slate-400">{currentProj.cliente} & {currentProj.ubicacion}</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-slate-400 block">Avance Técnico</span>
@@ -351,6 +369,68 @@ const addActividad = async (e: React.FormEvent) => {
                 </div>
               </div>
 
+              
+{/* Tarjetas de Resumen (Presupuesto, Gastos, etc.) */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {/* ... tus tarjetas de resumen actuales ... */}
+</div>
+
+{/* ========================================== */}
+{/* PEGA LAS PESTAÑAS EXACTAMENTE AQUÍ        */}
+{/* ========================================== */}
+<div className="flex border-b border-slate-800 mb-4">
+  <button
+    onClick={() => setActiveTab('actividades')}
+    className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+      activeTab === 'actividades'
+        ? 'border-blue-500 text-blue-400'
+        : 'border-transparent text-slate-400 hover:text-slate-200'
+    }`}
+  >
+    Hitos / Actividades
+  </button>
+  <button
+    onClick={() => setActiveTab('gastos')}
+    className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+      activeTab === 'gastos'
+        ? 'border-blue-500 text-blue-400'
+        : 'border-transparent text-slate-400 hover:text-slate-200'
+    }`}
+  >
+    Gastos ($)
+  </button>
+  <button
+    onClick={() => setActiveTab('tiempo')}
+    className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+      activeTab === 'tiempo'
+        ? 'border-blue-500 text-blue-400'
+        : 'border-transparent text-slate-400 hover:text-slate-200'
+    }`}
+  >
+    Horas HH
+  </button>
+</div>
+
+{/* Contenido Pestaña: Actividades */}
+{activeTab === 'actividades' && (
+  <div className="space-y-4">
+    {/* Tu formulario de actividades y lista de hitos */}
+  </div>
+)}
+
+{/* Contenido Pestaña: Gastos */}
+{activeTab === 'gastos' && (
+  <div className="space-y-4">
+    {/* Tu formulario de gastos y lista */}
+  </div>
+)}
+
+{/* Contenido Pestaña: Tiempo */}
+{activeTab === 'tiempo' && (
+  <div className="space-y-4">
+    {/* Tu formulario de tiempo y lista */}
+  </div>
+)}
          {/* Contenido Pestaña: Actividades */}
               {activeTab === 'actividades' && (
                 <div className="space-y-4">
@@ -419,65 +499,98 @@ const addActividad = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Contenido Pestaí±a: Gastos */}
+              {/* Contenido Pestaña: Gastos */}
               {activeTab === 'gastos' && (
                 <div className="space-y-4">
-                  <form onSubmit={addGasto} className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <form onSubmit={addGasto} className="flex flex-col sm:flex-row gap-2">
                     <input
-                      type="text" required placeholder="Descripción (ej. 4 Cámaras Domo)"
+                      type="text" required placeholder="Descripción del gasto (ej. Cable UTP, Conectores)"
                       value={newGasto.descripcion} onChange={e => setNewGasto({ ...newGasto, descripcion: e.target.value })}
-                      className="sm:col-span-2 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
+                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
                     />
                     <input
-                      type="number" required placeholder="Monto CLP"
+                      type="number" required placeholder="Monto (CLP)"
                       value={newGasto.monto_clp || ''} onChange={e => setNewGasto({ ...newGasto, monto_clp: Number(e.target.value) })}
-                      className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
+                      className="sm:w-36 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
                     />
-                    <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium">Registrar Gasto</button>
+                    <select
+                      value={newGasto.categoria} onChange={e => setNewGasto({ ...newGasto, categoria: e.target.value })}
+                      className="sm:w-40 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
+                    >
+                      <option value="Materiales">Materiales</option>
+                      <option value="Herramientas">Herramientas</option>
+                      <option value="Transporte">Transporte</option>
+                      <option value="Otros">Otros</option>
+                    </select>
+                    <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white">Agregar</button>
                   </form>
+
                   <div className="space-y-2">
-                    {projGastos.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                    {projGastos.map(gasto => (
+                      <div
+                        key={gasto.id}
+                        className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-slate-700"
+                      >
                         <div>
-                          <p className="text-sm font-medium text-white">{g.descripcion}</p>
-                          <p className="text-xs text-slate-400">{g.categoria} â€¢ {g.fecha}</p>
+                          <p className="text-sm font-medium text-slate-200">{gasto.descripcion}</p>
+                          <span className="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{gasto.categoria}</span>
                         </div>
-                        <span className="font-semibold text-amber-400">{formatCLP(g.monto_clp)}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-emerald-400">{formatCLP(gasto.monto_clp)}</span>
+                          <button
+                            onClick={() => eliminarGasto(gasto.id)}
+                            className="text-slate-600 hover:text-red-400 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Contenido Pestaí±a: Tiempo */}
+             {/* Contenido Pestaña: Tiempo (Horas HH) */}
               {activeTab === 'tiempo' && (
                 <div className="space-y-4">
-                  <form onSubmit={addTiempo} className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <form onSubmit={addTiempo} className="flex flex-col sm:flex-row gap-2">
                     <input
-                      type="text" required placeholder="Nombre Técnico"
-                      value={newTiempo.tecnico} onChange={e => setNewTiempo({ ...newTiempo, tecnico: e.target.value })}
-                      className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
-                    />
-                    <input
-                      type="number" step="0.5" required placeholder="Horas"
-                      value={newTiempo.horas} onChange={e => setNewTiempo({ ...newTiempo, horas: Number(e.target.value) })}
-                      className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
-                    />
-                    <input
-                      type="text" required placeholder="Labor realizada"
+                      type="text" required placeholder="Tarea o labor realizada"
                       value={newTiempo.tarea} onChange={e => setNewTiempo({ ...newTiempo, tarea: e.target.value })}
-                      className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm"
+                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
                     />
-                    <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium">Cargar Horas</button>
+                    <input
+                      type="text" required placeholder="Técnico"
+                      value={newTiempo.tecnico} onChange={e => setNewTiempo({ ...newTiempo, tecnico: e.target.value })}
+                      className="sm:w-40 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
+                    />
+                    <input
+                      type="number" required placeholder="Horas" step="0.5"
+                      value={newTiempo.horas || ''} onChange={e => setNewTiempo({ ...newTiempo, horas: Number(e.target.value) })}
+                      className="sm:w-28 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200"
+                    />
+                    <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white">Registrar</button>
                   </form>
+
                   <div className="space-y-2">
                     {projTiempos.map(t => (
-                      <div key={t.id} className="flex justify-between items-center p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-slate-700"
+                      >
                         <div>
-                          <p className="text-sm font-medium text-white">{t.tecnico} â€” <span className="text-slate-400 font-normal">{t.tarea}</span></p>
-                          <p className="text-xs text-slate-500">{t.fecha}</p>
+                          <p className="text-sm font-medium text-slate-200">{t.tarea}</p>
+                          <span className="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Técnico: {t.tecnico}</span>
                         </div>
-                        <span className="font-semibold text-purple-400">{t.horas} hrs</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-blue-400">{t.horas} hrs</span>
+                          <button
+                            onClick={() => eliminarTiempo(t.id)}
+                            className="text-slate-600 hover:text-red-400 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
